@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>indiragandi — Video indir</title>
+  <meta name="description" content="Instagram, YouTube, TikTok ve X videolarını istediğin çözünürlükte indir. Ücretsiz, kayıt yok.">
+  <meta name="theme-color" content="#FFE11A">
+  <meta name="color-scheme" content="light">
+  <meta name="format-detection" content="telephone=no">
+  <meta property="og:title" content="indiragandi — Video indir">
+  <meta property="og:description" content="Bağlantıyı yapıştır, çözünürlüğü seç, indir. Instagram, YouTube, TikTok ve X.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="nav yellow">
+    <div class="wrap nav-inner">
+      <a class="logo" href="/" aria-label="indiragandi ana sayfa">
+        <svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="19" fill="#17181B"/>
+          <path d="M20 10.5v14.5M13.5 19.5l6.5 6.5 6.5-6.5" fill="none" stroke="#FFE11A" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 29.5c2.6 1.4 13.4 1.4 16 0" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+        </svg>
+        <span>indiragandi</span>
+      </a>
+      <nav class="nav-links" aria-label="Sayfa içi">
+        <a href="#nasil">Nasıl çalışır</a>
+        <a href="#sss">SSS</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero yellow" id="top">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <h1><span class="hl">Yapıştır,</span> seç ve videoyu indir</h1>
+          <p class="lead">Instagram, YouTube, TikTok ve X videolarını istediğin çözünürlükte indir. Ücretsiz, kayıt yok.</p>
+
+          <form id="form" class="dl-form" novalidate>
+            <label class="sr-only" for="url">Video bağlantısı</label>
+            <div class="field">
+              <input id="url" name="url" type="url" inputmode="url" enterkeyhint="go"
+                     autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                     placeholder="Video bağlantısını yapıştır">
+              <button type="button" id="paste" class="paste" hidden>Yapıştır</button>
+              <button type="button" id="clear" class="clear" aria-label="Temizle" hidden>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+            <button id="submit" class="btn btn-dark" type="submit">
+              <span class="btn-label">Videoyu bul</span>
+              <span class="spinner" aria-hidden="true"></span>
+            </button>
+          </form>
+          <p id="formMsg" class="form-msg" role="alert" hidden></p>
+
+          <div class="platforms">
+            <span class="platforms-label">Desteklenenler</span>
+            <ul>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="17.3" cy="6.7" r="1.3" fill="currentColor"/></svg>Instagram</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4.5" fill="currentColor"/><path d="M10 9v6l5.2-3z" fill="#FFE11A"/></svg>YouTube</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 3v11.6a3.6 3.6 0 1 1-3.6-3.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M13.5 3c.4 2.8 2.4 4.6 5.3 4.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>TikTok</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>X</li>
+              <li class="more">+ Facebook, Reddit, Vimeo…</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hero-art" aria-hidden="true">
+          <svg viewBox="0 0 420 380" class="doodle">
+            <path d="M52 300c-30-40 2-92 56-104 40-9 64 14 104 8 52-8 74-48 124-30 46 17 62 76 30 116-36 44-110 46-176 46-62 0-114-8-138-36z" fill="#fff"/>
+            <g fill="none" stroke="#17181B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M34 92c10-6 20-6 30 0M30 112c14-8 28-8 42 0" />
+              <path d="M360 70l8-18M378 92l18-6M350 50l-4-18"/>
+            </g>
+            <rect x="140" y="34" width="150" height="270" rx="28" fill="#fff" stroke="#17181B" stroke-width="6"/>
+            <rect x="156" y="62" width="118" height="168" rx="12" fill="#FFE11A" stroke="#17181B" stroke-width="5"/>
+            <path d="M196 42h38" stroke="#17181B" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="215" cy="146" r="30" fill="#17181B"/>
+            <path d="M206 131v30l25-15z" fill="#FFE11A" stroke="#FFE11A" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M170 206h90" stroke="#17181B" stroke-width="5" stroke-linecap="round"/>
+            <path d="M170 206h48" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="218" cy="206" r="7" fill="#fff" stroke="#17181B" stroke-width="4"/>
+            <path d="M172 256c14 6 28 6 42 0M182 276h66" stroke="#17181B" stroke-width="5" stroke-linecap="round"/>
+            <g transform="rotate(-8 92 206)">
+              <rect x="44" y="172" width="96" height="66" rx="8" fill="#17181B"/>
+              <rect x="56" y="182" width="22" height="14" rx="3" fill="#FFE11A"/>
+              <rect x="84" y="182" width="22" height="14" rx="3" fill="#fff"/>
+              <rect x="112" y="182" width="18" height="14" rx="3" fill="#FFE11A"/>
+              <rect x="56" y="214" width="22" height="14" rx="3" fill="#fff"/>
+              <rect x="84" y="214" width="22" height="14" rx="3" fill="#FFE11A"/>
+              <rect x="112" y="214" width="18" height="14" rx="3" fill="#fff"/>
+            </g>
+            <circle cx="318" cy="268" r="46" fill="#17181B"/>
+            <path d="M318 242v40M302 268l16 16 16-16" fill="none" stroke="#FFE11A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M300 296h36" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+            <g fill="#17181B">
+              <path d="M84 40l5 13 13 5-13 5-5 13-5-13-13-5 13-5z"/>
+              <path d="M388 186l4 9 9 4-9 4-4 9-4-9-9-4 9-4z"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <section id="result" class="result" aria-live="polite" hidden></section>
+      </div>
+    </section>
+
+    <div class="wave wave-yd" aria-hidden="true"></div>
+
+    <section class="dark how" id="nasil">
+      <div class="wrap">
+        <div class="how-head">
+          <h2>Üç adımda<br><span class="swoosh">indir, kaydet</span></h2>
+          <p>Uygulama yok, üyelik yok. Bağlantıyı yapıştırman yeterli; gerisini indiragandi halleder.</p>
+        </div>
+        <ol class="steps">
+          <li class="step">
+            <span class="step-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 14.5l5-5M8 11l-2 2a3.5 3.5 0 0 0 5 5l2-2M16 13l2-2a3.5 3.5 0 0 0-5-5l-2 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+            <h3>Bağlantıyı kopyala</h3>
+            <p>Uygulamada videonun altındaki “Paylaş” menüsünden “Bağlantıyı kopyala”ya dokun.</p>
+          </li>
+          <li class="step">
+            <span class="step-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="15" cy="7" r="2.3" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="9" cy="17" r="2.3" fill="none" stroke="currentColor" stroke-width="2.2"/></svg></span>
+            <h3>Kaliteyi seç</h3>
+            <p>Buraya yapıştır, “Videoyu bul”a bas ve 1080p’den sese kadar istediğin seçeneği seç.</p>
+          </li>
+          <li class="step">
+            <span class="step-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <h3>Kaydet</h3>
+            <p>Dosya hazır olunca “Kaydet”e dokun. iPhone’da “Paylaş → Videoyu Kaydet” ile Fotoğraflar’a ekle.</p>
+          </li>
+        </ol>
+        <svg class="doodle-flower" viewBox="0 0 120 120" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M60 60c-6-26 6-44 18-40s8 26-18 40zM60 60c26-6 44 6 40 18s-26 8-40-18zM60 60c6 26-6 44-18 40s-8-26 18-40zM60 60c-26 6-44-6-40-18s26-8 40 18z"/></g></svg>
+      </div>
+    </section>
+
+    <div class="wave wave-dy" aria-hidden="true"></div>
+
+    <section class="yellow faq" id="sss">
+      <div class="wrap faq-wrap">
+        <h2>Sık sorulanlar</h2>
+        <div class="faq-list">
+          <details>
+            <summary>iPhone’da video nereye iniyor?</summary>
+            <p>“Kaydet”e dokunduğunda Safari dosyayı <b>Dosyalar › İndirilenler</b> klasörüne kaydeder. Videoyu doğrudan Fotoğraflar’a eklemek için “Paylaş”a dokunup <b>Videoyu Kaydet</b>’i seç.</p>
+          </details>
+          <details>
+            <summary>Hangi platformlar destekleniyor?</summary>
+            <p>Instagram (Reels ve gönderiler), YouTube (videolar ve Shorts), TikTok ve X. Facebook, Reddit, Vimeo, Threads ve Dailymotion bağlantıları da çoğunlukla çalışır.</p>
+          </details>
+          <details>
+            <summary>Bazı videolar neden inmiyor?</summary>
+            <p>Gizli hesaplardaki, yaş sınırlı ya da canlı yayındaki içerikler indirilemez. Platformlar zaman zaman sunuculardan gelen istekleri geçici olarak kısıtlayabilir; birkaç dakika sonra tekrar dene.</p>
+          </details>
+          <details>
+            <summary>Dosya boyutu sınırı var mı?</summary>
+            <p>Tek dosya en fazla <span data-max>200</span> MB olabilir. Uzun videolarda daha düşük bir çözünürlük seç ya da yalnızca sesi indir.</p>
+          </details>
+          <details>
+            <summary>Videolar bir yerde saklanıyor mu?</summary>
+            <p>Hayır. Dosya yalnızca sana gönderilirken geçici olarak hazırlanır ve hemen silinir. Lütfen yalnızca indirme hakkına sahip olduğun içerikleri indir.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="wave wave-yd" aria-hidden="true"></div>
+  <footer class="dark footer">
+    <div class="wrap footer-inner">
+      <a class="logo logo-light" href="#top">
+        <svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="19" fill="#FFE11A"/>
+          <path d="M20 10.5v14.5M13.5 19.5l6.5 6.5 6.5-6.5" fill="none" stroke="#17181B" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 29.5c2.6 1.4 13.4 1.4 16 0" fill="none" stroke="#17181B" stroke-width="2.6" stroke-linecap="round"/>
+        </svg>
+        <span>indiragandi</span>
+      </a>
+      <p>Kişisel kullanım içindir. Telif hakkı sahiplerine saygı göster.</p>
+    </div>
+  </footer>
+
+  <template id="tpl-result">
+    <div class="card">
+      <div class="card-top">
+        <div class="thumb"><img alt="" referrerpolicy="no-referrer" decoding="async"></div>
+        <div class="meta">
+          <span class="tag"></span>
+          <h2 class="title"></h2>
+          <p class="sub"></p>
+        </div>
+      </div>
+      <div class="items" role="tablist" aria-label="Gönderideki videolar" hidden></div>
+      <p class="pick">Çözünürlük seç</p>
+      <div class="options"></div>
+      <div class="status" hidden>
+        <div class="bar"><span></span></div>
+        <p class="status-text"></p>
+        <div class="status-actions"></div>
+        <p class="hint" hidden></p>
+      </div>
+      <button type="button" class="link-btn reset">Başka bir video indir</button>
+    </div>
+  </template>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
