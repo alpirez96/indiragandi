@@ -198,6 +198,9 @@ def ydl_opts(**extra) -> dict:
         opts["js_runtimes"] = {"deno": {"path": env["deno"]}}
     if os.environ.get("YTDLP_PROXY"):
         opts["proxy"] = os.environ["YTDLP_PROXY"]
+    clients = [c.strip() for c in os.environ.get("YTDLP_YT_CLIENTS", "").split(",") if c.strip()]
+    if clients:
+        opts["extractor_args"] = {"youtube": {"player_client": clients}}
     opts.update(extra)
     return opts
 
@@ -484,7 +487,9 @@ def build_options(info: dict) -> list[dict]:
 
 _ERRORS = [
     (r"not a bot|confirm you.?re not|sign in to confirm",
-     "YouTube bu isteği şu an engelledi. Birkaç dakika sonra tekrar deneyin.", 503),
+     "YouTube şu anda sunucumuzdan gelen istekleri engelliyor. Diğer platformlar çalışıyor.", 503),
+    (r"IP address is blocked|blocked in your (country|region)|not available in your (country|region)|geo.?restrict",
+     "Bu video sunucumuzun bölgesinde engelli, indirilemiyor.", 451),
     (r"larger than max-filesize|File is larger",
      "Dosya çok büyük. Daha düşük bir çözünürlük seçin.", 413),
     (r"private|login required|log in|cookies|rate-limit|rate limit|requires authentication",

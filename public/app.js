@@ -162,6 +162,14 @@
       });
     }
 
+    var videos = item.options.filter(function (o) { return o.kind === "video"; });
+    if (videos.length && videos.every(function (o) { return o.silent; })) {
+      var note = document.createElement("p");
+      note.className = "note";
+      note.textContent = data.platform + " bu videoyu sunucumuza sessiz veriyor; indirilen dosyada ses olmayacak.";
+      $(".pick", card).before(note);
+    }
+
     var opts = $(".options", card);
     item.options.forEach(function (o) {
       var b = document.createElement("button");

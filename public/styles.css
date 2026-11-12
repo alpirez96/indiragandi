@@ -267,6 +267,14 @@ h1, h2, h3 {
 }
 .items button[aria-selected="true"] { background: var(--ink); color: var(--yellow); }
 
+.note {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  background: #FFF7BF;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  font-size: 14px;
+}
 .pick { margin: 18px 0 10px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .opt {
@@ -392,6 +400,11 @@ h1, h2, h3 {
 .footer { padding: 30px 0 calc(30px + env(safe-area-inset-bottom)); }
 .footer-inner { display: grid; gap: 12px; }
 .footer p { margin: 0; color: var(--muted-dark); font-size: 14px; }
+.footer-meta { display: grid; gap: 4px; }
+.footer .credit { color: var(--white); font-size: 15px; font-weight: 600; }
+.credit a { color: var(--yellow); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+.credit .heart { display: inline-block; }
+@media (min-width: 900px) { .footer-meta { justify-items: end; text-align: right; } }
 .logo-light { color: var(--white); }
 
 /* ---------- Larger screens ---------- */
