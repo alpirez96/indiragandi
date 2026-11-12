@@ -133,20 +133,63 @@ def runtime_env() -> dict:
     return _env_cache
 
 
-def _cookie_file() -> str | None:
-    """YTDLP_COOKIES ortam değişkeni (Netscape cookies.txt, düz ya da base64) varsa kullan."""
-    raw = os.environ.get("YTDLP_COOKIES", "").strip()
+COOKIE_ENVS = {
+    "YouTube": "YOUTUBE_COOKIES",
+    "Instagram": "INSTAGRAM_COOKIES",
+    "TikTok": "TIKTOK_COOKIES",
+    "X": "X_COOKIES",
+}
+
+
+def _normalize_cookies(raw: str) -> list[str]:
+    """Netscape cookies.txt içeriğini satır satır düzeltir.
+
+    Vercel paneline yapıştırırken sekmeler boşluğa dönüşebildiği için alanlar
+    boşluklara göre de ayrılır. Tek parça base64 metin de kabul edilir.
+    """
+    raw = (raw or "").strip()
     if not raw:
-        return None
-    if not raw.startswith("#") and "\t" not in raw:
+        return []
+    if not any(ch.isspace() for ch in raw):
         try:
-            raw = base64.b64decode(raw).decode("utf-8")
+            raw = base64.b64decode(raw + "=" * (-len(raw) % 4)).decode("utf-8")
         except Exception:
-            return None
+            return []
+    lines = []
+    for line in raw.replace("\r", "").split("\n"):
+        line = line.strip()
+        if not line or (line.startswith("#") and not line.startswith("#HttpOnly_")):
+            continue
+        parts = line.split("\t") if line.count("\t") >= 6 else line.split(None, 6)
+        if len(parts) == 6:  # değeri boş çerez
+            parts.append("")
+        if len(parts) != 7:
+            continue
+        lines.append("\t".join(p.strip() for p in parts))
+    return lines
+
+
+def _cookie_file(platform: str) -> str | None:
+    """Platforma ait çerezleri (ve genel YTDLP_COOKIES'i) geçici bir cookies.txt'ye yazar."""
+    lines: list[str] = []
+    for name in (COOKIE_ENVS.get(platform), "YTDLP_COOKIES"):
+        if name:
+            lines += _normalize_cookies(os.environ.get(name, ""))
+    if not lines:
+        return None
     path = os.path.join(TMP, f"cookies-{uuid.uuid4().hex}.txt")
     with open(path, "w", encoding="utf-8") as fh:
-        fh.write(raw if raw.endswith("\n") else raw + "\n")
+        fh.write("# Netscape HTTP Cookie File\n" + "\n".join(lines) + "\n")
     return path
+
+
+def _proxy_for(platform: str) -> str | None:
+    proxy = os.environ.get("YTDLP_PROXY", "").strip()
+    if not proxy:
+        return None
+    allowed = os.environ.get("YTDLP_PROXY_FOR", "YouTube,Instagram,TikTok")
+    names = {n.strip().lower() for n in allowed.split(",") if n.strip()}
+    return proxy if ("all" in names or platform.lower() in names) else None
 
 
 class _Logger:
@@ -173,7 +216,7 @@ class _Logger:
         self._keep(msg)
 
 
-def ydl_opts(**extra) -> dict:
+def ydl_opts(platform: str = "", **extra) -> dict:
     env = runtime_env()
     opts = {
         "quiet": True,
@@ -196,8 +239,9 @@ def ydl_opts(**extra) -> dict:
         opts["ffmpeg_location"] = env["ffmpeg"]
     if env["deno"]:
         opts["js_runtimes"] = {"deno": {"path": env["deno"]}}
-    if os.environ.get("YTDLP_PROXY"):
-        opts["proxy"] = os.environ["YTDLP_PROXY"]
+    proxy = _proxy_for(platform)
+    if proxy:
+        opts["proxy"] = proxy
     clients = [c.strip() for c in os.environ.get("YTDLP_YT_CLIENTS", "").split(",") if c.strip()]
     if clients:
         opts["extractor_args"] = {"youtube": {"player_client": clients}}
@@ -544,8 +588,8 @@ def get_info(text: str) -> dict:
     import yt_dlp
 
     url, platform = normalize_url(text)
-    cookie = _cookie_file()
-    opts = ydl_opts(format=_first_format_selector, skip_download=True)
+    cookie = _cookie_file(platform)
+    opts = ydl_opts(platform, format=_first_format_selector, skip_download=True)
     if cookie:
         opts["cookiefile"] = cookie
     try:
@@ -658,6 +702,7 @@ def prepare_download(text: str, q: str, index: int) -> dict:
         }
 
     opts = ydl_opts(
+        platform,
         format=selector,
         outtmpl={"default": os.path.join(work, "media.%(ext)s")},
         paths={"home": work, "temp": work},
@@ -674,7 +719,7 @@ def prepare_download(text: str, q: str, index: int) -> dict:
     else:
         opts["postprocessors"] = [{"key": "FFmpegVideoRemuxer", "preferedformat": "mp4"}]
 
-    cookie = _cookie_file()
+    cookie = _cookie_file(platform)
     if cookie:
         opts["cookiefile"] = cookie
     try:
@@ -744,8 +789,8 @@ def health() -> dict:
         "python": sys.version.split()[0],
         "ffmpeg": bool(env["ffmpeg"]),
         "deno": bool(env["deno"]),
-        "cookies": bool(os.environ.get("YTDLP_COOKIES")),
-        "proxy": bool(os.environ.get("YTDLP_PROXY")),
+        "cookies": {p: len(_normalize_cookies(os.environ.get(e, ""))) for p, e in COOKIE_ENVS.items()},
+        "proxyFor": [p for p in ("YouTube", "Instagram", "TikTok", "X") if _proxy_for(p)],
         "maxMB": MAX_BYTES // (1024 * 1024),
     }
     try:

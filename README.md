@@ -15,9 +15,22 @@ YouTube imza çözümü için `deno` (pip paketi), birleştirme için `imageio-f
 
 | Değişken | Açıklama |
 | --- | --- |
+| `INSTAGRAM_COOKIES` | Yedek bir Instagram hesabının Netscape `cookies.txt` içeriği. Ses ve giriş isteyen gönderiler için gerekir. |
+| `YOUTUBE_COOKIES` | Yedek bir Google hesabının youtube.com çerezleri. Vercel IP'lerine gelen "bot değilim" engelini aşmak için. |
+| `TIKTOK_COOKIES`, `X_COOKIES`, `YTDLP_COOKIES` | Diğer platformlar / tüm platformlar için çerezler (isteğe bağlı). |
 | `MAX_FILESIZE_MB` | Tek dosya üst sınırı (varsayılan 200). Vercel `/tmp` alanı 512 MB olduğundan ~240'ın üstüne çıkarmayın. |
-| `YTDLP_COOKIES` | Netscape `cookies.txt` içeriği (düz ya da base64). Instagram gibi giriş isteyen içerikler için. |
-| `YTDLP_PROXY` | yt-dlp için proxy adresi (ör. `http://kullanici:sifre@host:port`). |
+| `YTDLP_PROXY`, `YTDLP_PROXY_FOR` | İsteğe bağlı proxy ve hangi platformlarda kullanılacağı (varsayılan `YouTube,Instagram,TikTok`). |
+| `YTDLP_YT_CLIENTS` | YouTube player_client listesi (ör. `tv,web_safari`). |
+
+Çerezler düz metin (sekme ya da boşluk ayrılmış) veya tek parça base64 olarak verilebilir.
+`/api/health` hangi platform için kaç çerez okunduğunu gösterir (değerleri göstermez).
+
+### Çerezleri alma (bilgisayarda)
+
+1. Tarayıcıya "Get cookies.txt LOCALLY" eklentisini kurun ve gizli pencerede çalışmasına izin verin.
+2. Gizli pencerede yedek hesapla giriş yapın (YouTube için ardından aynı sekmede `https://www.youtube.com/robots.txt` adresini açın).
+3. Eklentiyle o sitenin çerezlerini dışa aktarın ve gizli pencereyi **çıkış yapmadan** kapatın.
+4. Dosya içeriğini Vercel → Project → Settings → Environment Variables'a ilgili anahtarla (Production) yapıştırın ve yeniden deploy edin.
 
 ## Sınırlar
 
