@@ -1,12 +1,13 @@
 (function () {
   "use strict";
 
-  var SUPPORTED = [
-    "youtube.com", "youtu.be", "youtube-nocookie.com", "instagram.com", "instagr.am",
-    "tiktok.com", "x.com", "twitter.com", "facebook.com", "fb.watch", "reddit.com",
-    "redd.it", "vimeo.com", "threads.net", "threads.com", "pinterest.com", "pin.it",
-    "dailymotion.com", "dai.ly", "twitch.tv"
-  ];
+  var SUPPORTED = ["tiktok.com", "x.com", "twitter.com", "pinterest.com", "pin.it", "twitch.tv"];
+  var UNSUPPORTED = {
+    "youtube.com": "YouTube", "youtu.be": "YouTube", "youtube-nocookie.com": "YouTube",
+    "instagram.com": "Instagram", "instagr.am": "Instagram", "reddit.com": "Reddit",
+    "redd.it": "Reddit", "vimeo.com": "Vimeo", "threads.net": "Threads", "threads.com": "Threads",
+    "facebook.com": "Facebook", "fb.watch": "Facebook", "dailymotion.com": "Dailymotion", "dai.ly": "Dailymotion"
+  };
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var form = $("#form");
@@ -34,11 +35,22 @@
     return m ? "https://" + m[0].replace(/[).,;!]+$/, "") : "";
   }
 
-  function hostOk(url) {
+  function matchHost(url, domains) {
     try {
       var h = new URL(url).hostname.toLowerCase();
-      return SUPPORTED.some(function (d) { return h === d || h.slice(-(d.length + 1)) === "." + d; });
-    } catch (e) { return false; }
+      for (var i = 0; i < domains.length; i++) {
+        var d = domains[i];
+        if (h === d || h.slice(-(d.length + 1)) === "." + d) return d;
+      }
+    } catch (e) { /* geçersiz adres */ }
+    return null;
+  }
+
+  function hostOk(url) { return !!matchHost(url, SUPPORTED); }
+
+  function unsupportedName(url) {
+    var d = matchHost(url, Object.keys(UNSUPPORTED));
+    return d ? UNSUPPORTED[d] : null;
   }
 
   function fmtBytes(n) {
@@ -96,7 +108,11 @@
     var url = extractUrl(raw);
     showFormMsg("");
     if (!url) { showFormMsg("Önce bir video bağlantısı yapıştır."); input.focus(); return; }
-    if (!hostOk(url)) { showFormMsg("Bu site desteklenmiyor. Instagram, YouTube, TikTok veya X bağlantısı dene."); return; }
+    if (!hostOk(url)) {
+      var name = unsupportedName(url);
+      showFormMsg((name ? name + " şu an desteklenmiyor." : "Bu site desteklenmiyor.") + " TikTok, X, Pinterest veya Twitch bağlantısı dene.");
+      return;
+    }
     if (input.value.trim() !== url) input.value = url;
     syncFieldButtons();
 

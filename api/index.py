@@ -6,7 +6,7 @@ Uç noktalar
   GET /api/health                       -> çalışma ortamı bilgisi
 
 Notlar
-  * Platform bağlantıları (özellikle YouTube) isteği yapan IP'ye bağlıdır. Bu yüzden
+  * Bazı platformların (ör. TikTok) medya bağlantıları isteği yapan oturuma bağlıdır. Bu yüzden
     indirme isteği bilgiyi aynı çağrı içinde yeniden çıkarır, dosyayı /tmp'ye indirir,
     gerekirse ffmpeg ile ses+görüntüyü birleştirir ve sonra kullanıcıya akıtır.
   * Kalite seçimi her iki uçta da aynı saf Python fonksiyonuyla yapılır (choose_formats),
@@ -26,7 +26,9 @@ import sys
 import tempfile
 import time
 import unicodedata
+import urllib.error
 import urllib.parse
+import urllib.request
 import uuid
 
 TMP = tempfile.gettempdir()
@@ -38,34 +40,44 @@ MP3_KBPS = 192
 
 # Desteklenen alan adları -> platform adı
 PLATFORMS = {
+    "tiktok.com": "TikTok",
+    "x.com": "X",
+    "twitter.com": "X",
+    "pinterest.com": "Pinterest",
+    "pin.it": "Pinterest",
+    "twitch.tv": "Twitch",
+}
+
+# Sunucu IP'lerini engelleyen ya da giriş isteyen platformlar
+UNSUPPORTED = {
     "youtube.com": "YouTube",
     "youtu.be": "YouTube",
     "youtube-nocookie.com": "YouTube",
     "instagram.com": "Instagram",
     "instagr.am": "Instagram",
-    "tiktok.com": "TikTok",
-    "x.com": "X",
-    "twitter.com": "X",
-    "facebook.com": "Facebook",
-    "fb.watch": "Facebook",
     "reddit.com": "Reddit",
     "redd.it": "Reddit",
     "vimeo.com": "Vimeo",
     "threads.net": "Threads",
     "threads.com": "Threads",
-    "pinterest.com": "Pinterest",
-    "pin.it": "Pinterest",
+    "facebook.com": "Facebook",
+    "fb.watch": "Facebook",
     "dailymotion.com": "Dailymotion",
     "dai.ly": "Dailymotion",
-    "twitch.tv": "Twitch",
 }
+
+TIKTOK_SHORT_HOSTS = ("vm.tiktok.com", "vt.tiktok.com")
+MOBILE_UA = (
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 "
+    "(KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1"
+)
 
 URL_RE = re.compile(r"https?://[^\s<>\"']+", re.I)
 BARE_RE = re.compile(r"(?:[a-z0-9-]+\.)+[a-z]{2,}/[^\s<>\"']*", re.I)
 
 
 # --------------------------------------------------------------------------- #
-# Ortam: ffmpeg, deno (YouTube imza çözümü için), çerez ve proxy ayarları
+# Ortam: ffmpeg, çerez ve proxy ayarları
 # --------------------------------------------------------------------------- #
 
 _env_cache: dict | None = None
@@ -86,23 +98,6 @@ def _ensure_exec(path: str | None, name: str) -> str | None:
     return dst
 
 
-def _find_deno() -> str | None:
-    try:
-        import deno  # type: ignore
-
-        return _ensure_exec(deno.find_deno_bin(), "deno")
-    except Exception:
-        pass
-    # pip --target / vendor klasörü düzenleri için yedek arama
-    for base in sys.path:
-        for rel in ("bin/deno", "../bin/deno", "../../bin/deno", "../../../bin/deno"):
-            p = os.path.normpath(os.path.join(base, rel))
-            if os.path.isfile(p):
-                return _ensure_exec(p, "deno")
-    found = shutil.which("deno")
-    return _ensure_exec(found, "deno") if found else None
-
-
 def _find_ffmpeg() -> str | None:
     try:
         import imageio_ffmpeg  # type: ignore
@@ -119,23 +114,16 @@ def runtime_env() -> dict:
         return _env_cache
 
     # Lambda'da yalnızca /tmp yazılabilir
-    for key, sub in (("DENO_DIR", "deno-cache"), ("XDG_CACHE_HOME", "cache")):
-        os.environ.setdefault(key, os.path.join(TMP, sub))
+    os.environ.setdefault("XDG_CACHE_HOME", os.path.join(TMP, "cache"))
     home = os.environ.get("HOME")
     if not home or not os.access(home, os.W_OK):
         os.environ["HOME"] = TMP
-    os.environ.setdefault("DENO_NO_UPDATE_CHECK", "1")
 
-    _env_cache = {
-        "ffmpeg": _find_ffmpeg(),
-        "deno": _find_deno(),
-    }
+    _env_cache = {"ffmpeg": _find_ffmpeg()}
     return _env_cache
 
 
 COOKIE_ENVS = {
-    "YouTube": "YOUTUBE_COOKIES",
-    "Instagram": "INSTAGRAM_COOKIES",
     "TikTok": "TIKTOK_COOKIES",
     "X": "X_COOKIES",
 }
@@ -187,7 +175,7 @@ def _proxy_for(platform: str) -> str | None:
     proxy = os.environ.get("YTDLP_PROXY", "").strip()
     if not proxy:
         return None
-    allowed = os.environ.get("YTDLP_PROXY_FOR", "YouTube,Instagram,TikTok")
+    allowed = os.environ.get("YTDLP_PROXY_FOR", "all")
     names = {n.strip().lower() for n in allowed.split(",") if n.strip()}
     return proxy if ("all" in names or platform.lower() in names) else None
 
@@ -237,14 +225,9 @@ def ydl_opts(platform: str = "", **extra) -> dict:
     }
     if env["ffmpeg"]:
         opts["ffmpeg_location"] = env["ffmpeg"]
-    if env["deno"]:
-        opts["js_runtimes"] = {"deno": {"path": env["deno"]}}
     proxy = _proxy_for(platform)
     if proxy:
         opts["proxy"] = proxy
-    clients = [c.strip() for c in os.environ.get("YTDLP_YT_CLIENTS", "").split(",") if c.strip()]
-    if clients:
-        opts["extractor_args"] = {"youtube": {"player_client": clients}}
     opts.update(extra)
     return opts
 
@@ -278,9 +261,41 @@ def normalize_url(text: str) -> tuple[str, str]:
     for domain, name in PLATFORMS.items():
         if host == domain or host.endswith("." + domain):
             return url, name
-    raise UserError(
-        "Bu site desteklenmiyor. Instagram, YouTube, TikTok veya X bağlantısı deneyin."
-    )
+    for domain, name in UNSUPPORTED.items():
+        if host == domain or host.endswith("." + domain):
+            raise UserError(f"{name} şu an desteklenmiyor. TikTok, X, Pinterest veya Twitch bağlantısı deneyin.")
+    raise UserError("Bu site desteklenmiyor. TikTok, X, Pinterest veya Twitch bağlantısı deneyin.")
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def expand_short_url(url: str) -> str:
+    """vm.tiktok.com / vt.tiktok.com / tiktok.com/t/ kısa bağlantılarını video adresine çevirir."""
+    current = url
+    for _ in range(3):
+        parts = urllib.parse.urlsplit(current)
+        host = (parts.hostname or "").lower()
+        is_short = host in TIKTOK_SHORT_HOSTS or (host.endswith("tiktok.com") and parts.path.startswith("/t/"))
+        if not is_short:
+            break
+        req = urllib.request.Request(current, headers={"User-Agent": MOBILE_UA, "Accept": "text/html"})
+        try:
+            urllib.request.build_opener(_NoRedirect).open(req, timeout=10).close()
+            break  # yönlendirme yok
+        except urllib.error.HTTPError as err:
+            loc = err.headers.get("Location") if err.code in (301, 302, 303, 307, 308) else None
+            if not loc:
+                break
+            current = urllib.parse.urljoin(current, loc)
+        except Exception:
+            break
+    parts = urllib.parse.urlsplit(current)
+    if current != url and re.search(r"/(video|photo)/\d+", parts.path):
+        return urllib.parse.urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
+    return url
 
 
 # --------------------------------------------------------------------------- #
@@ -407,6 +422,17 @@ def choose_formats(formats: list[dict], q: str) -> list[dict]:
             return [min(av, key=lambda f: (_height_key(f), _proto_rank(f)))]
         return []
 
+    if q.startswith("id:"):
+        fid = q[3:]
+        match = [f for f in formats if str(f.get("format_id")) == fid]
+        if not match:
+            return choose_formats(formats, "best")
+        f = match[0]
+        if _has_audio(f) or not _is_video_any(f):
+            return [f]
+        audio = _best_audio(formats)
+        return [f, audio] if audio else [f]
+
     if q == "best":
         # yt-dlp formatları kötüden iyiye sıralar; sesi olan en iyi formatı tercih et
         anyv = [f for f in formats if _is_video_any(f)]
@@ -453,7 +479,7 @@ def build_options(info: dict) -> list[dict]:
     heights = sorted(
         {_height_key(f) for f in formats if _usable(f) and _is_video(f)}, reverse=True
     )
-    candidates, seen = [], set()
+    candidates, seen, labels = [], set(), set()
     for h in heights:
         chosen = choose_formats(formats, f"h{h}")
         if not chosen:
@@ -473,6 +499,9 @@ def build_options(info: dict) -> list[dict]:
             label += " 4K"
         elif short >= 1400:
             label += " 2K"
+        if label in labels:
+            continue
+        labels.add(label)
         candidates.append(
             {
                 "q": f"h{h}",
@@ -484,6 +513,34 @@ def build_options(info: dict) -> list[dict]:
                 "silent": len(chosen) == 1 and not _has_audio(video),
             }
         )
+
+    # Çözünürlüklü formatların hepsi sessizse ama boyut bilgisi olmayan sesli formatlar
+    # varsa (ör. Facebook "hd"/"sd"), sessizlerin yerine onları sun.
+    if candidates and all(o["silent"] for o in candidates):
+        progressive = [
+            f for f in formats
+            if _usable(f) and _is_video_any(f) and not _is_video(f) and _has_audio(f)
+        ]
+        if progressive:
+            extra = []
+            for f in reversed(progressive):  # yt-dlp kötüden iyiye sıralar
+                note = str(f.get("format_note") or f.get("format_id") or "").strip()
+                label = note.upper() if 0 < len(note) <= 8 else "Orijinal"
+                if label in {o["label"] for o in extra}:
+                    continue
+                size = _size(f, duration)
+                extra.append(
+                    {
+                        "q": f"id:{f.get('format_id')}",
+                        "label": label,
+                        "kind": "video",
+                        "ext": "mp4",
+                        "size": size,
+                        "tooBig": bool(size and size > MAX_BYTES),
+                        "silent": False,
+                    }
+                )
+            candidates = extra
 
     # Boyut bilgisi olmayan platformlar için tek "en iyi" seçeneği
     if not candidates:
@@ -530,8 +587,6 @@ def build_options(info: dict) -> list[dict]:
 # --------------------------------------------------------------------------- #
 
 _ERRORS = [
-    (r"not a bot|confirm you.?re not|sign in to confirm",
-     "YouTube şu anda sunucumuzdan gelen istekleri engelliyor. Diğer platformlar çalışıyor.", 503),
     (r"IP address is blocked|blocked in your (country|region)|not available in your (country|region)|geo.?restrict",
      "Bu video sunucumuzun bölgesinde engelli, indirilemiyor.", 451),
     (r"larger than max-filesize|File is larger",
@@ -546,8 +601,8 @@ _ERRORS = [
      "Bu bağlantıda indirilebilir bir video bulunamadı.", 404),
     (r"unavailable|not found|404|removed|deleted|does not exist",
      "Video bulunamadı ya da kaldırılmış.", 404),
-    (r"Unsupported URL",
-     "Bu bağlantı desteklenmiyor. Videonun kendi bağlantısını yapıştırın.", 400),
+    (r"Unsupported URL|No suitable extractor",
+     "Bu bağlantı açılamadı. Videonun bağlantısını uygulamadan yeniden kopyalayıp deneyin.", 400),
     (r"timed out|timeout|Connection reset|Temporary failure",
      "Platforma bağlanırken zaman aşımı oldu. Tekrar deneyin.", 504),
 ]
@@ -588,6 +643,8 @@ def get_info(text: str) -> dict:
     import yt_dlp
 
     url, platform = normalize_url(text)
+    if platform == "TikTok":
+        url = expand_short_url(url)
     cookie = _cookie_file(platform)
     opts = ydl_opts(platform, format=_first_format_selector, skip_download=True)
     if cookie:
@@ -670,7 +727,9 @@ def prepare_download(text: str, q: str, index: int) -> dict:
     import yt_dlp
 
     url, platform = normalize_url(text)
-    if q not in ("audio", "best") and not re.fullmatch(r"h\d{2,5}", q or ""):
+    if platform == "TikTok":
+        url = expand_short_url(url)
+    if q not in ("audio", "best") and not re.fullmatch(r"h\d{2,5}|id:[A-Za-z0-9_.+\-]{1,80}", q or ""):
         raise UserError("Geçersiz kalite seçimi.")
 
     os.makedirs(WORK_ROOT, exist_ok=True)
@@ -788,17 +847,10 @@ def health() -> dict:
         "yt_dlp": yt_dlp.version.__version__,
         "python": sys.version.split()[0],
         "ffmpeg": bool(env["ffmpeg"]),
-        "deno": bool(env["deno"]),
         "cookies": {p: len(_normalize_cookies(os.environ.get(e, ""))) for p, e in COOKIE_ENVS.items()},
-        "proxyFor": [p for p in ("YouTube", "Instagram", "TikTok", "X") if _proxy_for(p)],
+        "proxyFor": [p for p in sorted(set(PLATFORMS.values())) if _proxy_for(p)],
         "maxMB": MAX_BYTES // (1024 * 1024),
     }
-    try:
-        import yt_dlp_ejs  # type: ignore  # noqa: F401
-
-        out["ejs"] = True
-    except Exception:
-        out["ejs"] = False
     return out
 
 

@@ -1,4 +1,4 @@
-# yt-dlp: video bilgisi ve indirme (deno -> YouTube imza çözümü, curl-cffi -> tarayıcı taklidi)
-yt-dlp[default,curl-cffi,deno]>=2026.10.26
+# yt-dlp: video bilgisi ve indirme (curl-cffi -> tarayıcı taklidi)
+yt-dlp[default,curl-cffi]>=2026.10.26
 # Statik ffmpeg ikilisi: ses+görüntü birleştirme ve MP3 dönüştürme
 imageio-ffmpeg>=0.8.1
